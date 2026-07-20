@@ -1,6 +1,5 @@
 from pathlib import Path
 
-app_code = r'''
 import io
 import re
 from pathlib import Path
@@ -575,10 +574,4 @@ with download_col3:
 
 with st.expander("Como o aplicativo identifica os features"):
     st.markdown(
-        """
-O aplicativo compara uma coluna da tabela com um identificador extraído de cada espectro do MGF.
-
-Exemplo:
-
-```text
-TITLE=69/150.0260mz/0.04min
+        
