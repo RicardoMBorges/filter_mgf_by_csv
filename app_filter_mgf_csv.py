@@ -378,9 +378,17 @@ for filter_index in range(int(number_of_filters)):
         f"Filtro {filter_index + 1}",
         expanded=True,
     ):
+        filter_columns = list(table_df.columns)
+        default_filter_index = (
+            filter_columns.index("VIP")
+            if "VIP" in filter_columns
+            else 0
+        )
+
         column = st.selectbox(
             "Coluna",
-            options=list(table_df.columns),
+            options=filter_columns,
+            index=default_filter_index,
             key=f"filter_column_{filter_index}",
         )
 
@@ -401,6 +409,7 @@ for filter_index in range(int(number_of_filters)):
                     "Valor absoluto >=",
                     "Valor absoluto <=",
                 ],
+                index=0,
                 key=f"numeric_operator_{filter_index}",
             )
 
@@ -409,11 +418,7 @@ for filter_index in range(int(number_of_filters)):
                 errors="coerce",
             ).dropna()
 
-            default_value = (
-                float(numeric_values.median())
-                if not numeric_values.empty
-                else 0.0
-            )
+            default_value = 2.0
 
             value_col1, value_col2 = st.columns(2)
 
@@ -634,7 +639,7 @@ with mgf_col1:
     mgf_source_field = st.selectbox(
         "Campo do MGF que contém o ID",
         options=["TITLE", "SCANS", "FEATURE_ID"],
-        index=0,
+        index=2,
     )
 
 with mgf_col2:
