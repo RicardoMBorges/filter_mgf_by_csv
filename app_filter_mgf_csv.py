@@ -571,7 +571,30 @@ with download_col3:
         use_container_width=True,
     )
 
-
 with st.expander("Como o aplicativo identifica os features"):
     st.markdown(
-        
+        """
+O aplicativo compara uma coluna da tabela com um identificador extraído de cada espectro do MGF.
+
+Exemplo:
+
+```text
+TITLE=69/150.0260mz/0.04min
+```
+
+Usando **Primeiro valor antes de '/'**, o identificador será:
+
+```text
+69
+```
+
+Assim, uma linha da tabela contendo `69` selecionará esse espectro.
+
+Também é possível usar:
+
+- o valor completo de `TITLE`;
+- o primeiro token de `TITLE`;
+- o campo `SCANS`;
+- o campo `FEATURE_ID`, quando presente.
+"""
+    )
