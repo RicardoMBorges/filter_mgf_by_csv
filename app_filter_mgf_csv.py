@@ -13,17 +13,20 @@ st.set_page_config(
     layout="wide",
 )
 
+# ============================================================
+# Load the logo LAABio
+logo_LAABio = Image.open("static/LAABio.png")
+# Display the logo in the sidebar or header
+st.image(logo_LAABio, width=300)
+
+
 st.title("MGF Feature Filter")
 st.caption(
     "Filtre uma tabela por qualquer coluna, use os IDs resultantes para selecionar "
     "espectros em um arquivo MGF e exporte os arquivos filtrados."
 )
 
-# ============================================================
-# Load the logo LAABio
-logo_LAABio = Image.open("static/LAABio.png")
-# Display the logo in the sidebar or header
-st.image(logo_LAABio, width=300)
+
 
 # ============================================================
 # Funções auxiliares
