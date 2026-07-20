@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+from PIL import Image
 
 
 st.set_page_config(
@@ -18,6 +19,11 @@ st.caption(
     "espectros em um arquivo MGF e exporte os arquivos filtrados."
 )
 
+# ============================================================
+# Load the logo LAABio
+logo_LAABio = Image.open("static/LAABio.png")
+# Display the logo in the sidebar or header
+st.sidebar.image(logo_LAABio, width=300)
 
 # ============================================================
 # Funções auxiliares
