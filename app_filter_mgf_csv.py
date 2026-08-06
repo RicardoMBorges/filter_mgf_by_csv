@@ -375,7 +375,7 @@ number_of_filters = st.number_input(
     "Número de filtros",
     min_value=0,
     max_value=10,
-    value=1,
+    value=0,
     step=1,
 )
 
