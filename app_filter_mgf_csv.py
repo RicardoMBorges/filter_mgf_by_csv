@@ -26,6 +26,77 @@ st.caption(
     "espectros em um arquivo MGF e exporte os arquivos filtrados."
 )
 
+with st.expander("Como funciona este aplicativo?", expanded=False):
+    st.markdown(
+        """
+Este aplicativo conecta **uma tabela de resultados** (CSV/TSV/TXT) a um arquivo
+**MGF** por meio de um identificador comum. O fluxo é:
+
+1. importe a tabela contendo os features e as variáveis que deseja usar como filtro;
+2. aplique um ou mais filtros à tabela;
+3. escolha qual coluna da tabela contém o identificador dos features;
+4. informe onde esse mesmo identificador aparece no MGF;
+5. o aplicativo mantém apenas os espectros cujos IDs permaneceram após os filtros.
+
+Os filtros são independentes do formato do MGF. Assim, a tabela pode conter VIP,
+p-value, fold change, classe química, grupo, anotação ou qualquer outra variável.
+O único requisito para selecionar os espectros é existir uma forma de relacionar
+um ID da tabela a um ID presente no MGF.
+        """
+    )
+
+with st.expander("Como preparar o CSV usado para filtrar o MGF", expanded=False):
+    st.markdown(
+        """
+A tabela deve ter **uma linha por feature** e uma linha de cabeçalho com o nome das
+colunas. Não existe uma lista fixa de colunas obrigatórias.
+
+A única informação essencial é uma coluna que identifique cada feature e que possa
+ser relacionada ao MGF. Por exemplo:
+
+| feature | VIP | p_value | log2FC | group | annotation |
+|---|---:|---:|---:|---|---|
+| 619/123.9643mz/0.21min | 2.41 | 0.003 | 1.82 | Case | Compound A |
+| 845/301.1412mz/4.82min | 1.76 | 0.021 | -1.25 | Control | Compound B |
+| 912/455.2187mz/7.31min | 0.84 | 0.410 | 0.35 | Case | Unknown |
+
+Nesse exemplo, a coluna `feature` contém um identificador composto. Se o MGF usar
+apenas o primeiro número como ID, selecione **Primeiro valor antes de '/'**. Assim:
+
+`619/123.9643mz/0.21min` → `619`
+
+As demais colunas são opcionais e podem ser usadas como filtros. Exemplos:
+`VIP >= 1`, `p_value < 0.05`, `log2FC absoluto >= 1`, `group = Case` ou
+`annotation não está vazio`.
+
+**Importante:** o nome da coluna de ID não precisa ser `feature`. Pode ser
+`FEATURE_ID`, `row ID`, `ID`, `scan`, ou outro nome. Você selecionará essa coluna
+mais adiante na interface.
+        """
+    )
+
+    csv_template = pd.DataFrame(
+        {
+            "feature": [
+                "619/123.9643mz/0.21min",
+                "845/301.1412mz/4.82min",
+                "912/455.2187mz/7.31min",
+            ],
+            "VIP": [2.41, 1.76, 0.84],
+            "p_value": [0.003, 0.021, 0.410],
+            "log2FC": [1.82, -1.25, 0.35],
+            "group": ["Case", "Control", "Case"],
+            "annotation": ["Compound A", "Compound B", "Unknown"],
+        }
+    )
+
+    st.download_button(
+        "Baixar CSV-modelo",
+        data=csv_template.to_csv(index=False).encode("utf-8-sig"),
+        file_name="mgf_filter_template.csv",
+        mime="text/csv",
+        use_container_width=False,
+    )
 
 
 # ============================================================
@@ -371,6 +442,26 @@ st.caption(
     "equivalentes a uma condição AND."
 )
 
+with st.expander("Como funcionam os filtros?", expanded=False):
+    st.markdown(
+        """
+Cada filtro reduz a tabela antes de o próximo ser aplicado. Portanto, dois filtros
+como `VIP >= 1` e `p_value < 0.05` significam:
+
+**manter apenas os features que atendem às duas condições ao mesmo tempo.**
+
+Para colunas numéricas, o aplicativo oferece comparações, intervalos e filtros por
+valor absoluto. Para colunas de texto, é possível selecionar categorias, procurar
+termos, testar igualdade ou verificar campos vazios.
+
+Exemplos úteis:
+- `VIP >= 1.0` para manter features com maior contribuição multivariada;
+- `p_value < 0.05` para selecionar um subconjunto por significância estatística;
+- `Valor absoluto >= 1` em `log2FC` para considerar mudanças nas duas direções;
+- `annotation` → `Não está vazio` para manter apenas features anotados.
+        """
+    )
+
 number_of_filters = st.number_input(
     "Número de filtros",
     min_value=0,
@@ -572,6 +663,22 @@ st.download_button(
 
 st.subheader("Selecionar IDs para o MGF")
 
+with st.expander("O que devo selecionar como ID?", expanded=False):
+    st.markdown(
+        """
+Escolha a coluna que identifica cada feature na tabela. O objetivo é produzir um ID
+que também exista dentro de cada bloco `BEGIN IONS ... END IONS` do MGF.
+
+Exemplos:
+- tabela: `619/123.9643mz/0.21min` → usar **Primeiro valor antes de '/'** → `619`;
+- tabela: `619` → usar **Valor completo**;
+- tabela: `619 feature_123` → usar **Primeiro token** → `619`.
+
+O aplicativo normaliza números importados como `619.0` para `619`, evitando uma
+diferença comum criada durante a leitura do CSV.
+        """
+    )
+
 id_col1, id_col2 = st.columns(2)
 
 with id_col1:
@@ -641,6 +748,37 @@ if not spectra:
     st.stop()
 
 st.subheader("Correspondência com o MGF")
+
+with st.expander("Como saber onde está o ID no MGF?", expanded=False):
+    st.markdown(
+        """
+Cada espectro do MGF contém metadados antes da lista de picos. Um bloco pode se
+parecer com:
+
+```text
+BEGIN IONS
+FEATURE_ID=619
+SCANS=619
+TITLE=619/123.9643mz/0.21min
+PEPMASS=123.9643
+RTINSECONDS=12.6
+...
+END IONS
+```
+
+Selecione o campo que contém o mesmo identificador extraído da tabela:
+
+- **FEATURE_ID**: normalmente a melhor escolha quando esse campo está presente;
+- **SCANS**: útil quando o número do scan é o identificador usado pela tabela;
+- **TITLE**: útil quando o identificador está incorporado ao título.
+
+A regra de extração precisa produzir exatamente o mesmo valor nos dois lados. Se a
+tabela produz `619`, o campo escolhido no MGF também precisa produzir `619`.
+
+Se nenhuma correspondência for encontrada, verifique primeiro esta etapa antes de
+revisar os filtros.
+        """
+    )
 
 mgf_col1, mgf_col2 = st.columns(2)
 
